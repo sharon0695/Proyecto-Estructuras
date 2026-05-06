@@ -1,0 +1,1 @@
+/*Archivo para el hook de historial de búsqueda - (Pila) */

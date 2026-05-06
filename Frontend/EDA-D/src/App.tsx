@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
+import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
+import Home from './pages/Home/Home'
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
       <Route path="/registro" element={<RegisterPage />} />
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="/Home" element={<Home />} />
     </Routes>
   )
 }

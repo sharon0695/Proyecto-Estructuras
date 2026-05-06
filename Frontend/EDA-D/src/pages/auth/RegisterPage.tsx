@@ -1,27 +1,36 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { signInWithEmailAndPassword } from 'firebase/auth'
-import { auth } from '../Firebase/config.ts'
-import { getAuthErrorMessage } from '../Firebase/authErrors'
+import { Link, useNavigate } from 'react-router-dom'
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { auth, db } from '../../Firebase/config.ts'
+import { getAuthErrorMessage } from '../../Firebase/authErrors'
 
-function LoginPage() {
-  const location = useLocation()
+function RegisterPage() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState('')
-  const registered = (location.state as { registered?: boolean } | null)?.registered
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
-    setSuccess('')
+
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.')
+      return
+    }
+
     setLoading(true)
 
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      setSuccess('Sesión iniciada. ¡Bienvenido a la droguería!')
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        email: userCredential.user.email,
+        createdAt: serverTimestamp(),
+      })
+      navigate('/login', { state: { registered: true } })
     } catch (authError: any) {
       setError(getAuthErrorMessage(authError?.code))
     } finally {
@@ -33,14 +42,9 @@ function LoginPage() {
     <main className="page-shell">
       <section className="card">
         <div className="card-badge">Droguería EDA</div>
-        <h1>Iniciar sesión</h1>
-        <p className="subtitle">Accede con tu correo para continuar en la droguería.</p>
+        <h1>Crear cuenta</h1>
+        <p className="subtitle">Regístrate para gestionar tus envíos y compras en la droguería.</p>
 
-        {registered && !success && !error ? (
-          <div className="notice success">Cuenta creada correctamente. Inicia sesión.</div>
-        ) : null}
-
-        {success ? <div className="notice success">{success}</div> : null}
         {error ? <div className="notice error">{error}</div> : null}
 
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -62,23 +66,37 @@ function LoginPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="********"
+              placeholder="Mínimo 6 caracteres"
+              minLength={6}
+              required
+              disabled={loading}
+            />
+          </label>
+
+          <label>
+            Confirmar contraseña
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="Repite la contraseña"
+              minLength={6}
               required
               disabled={loading}
             />
           </label>
 
           <button type="submit" className="submit-button" disabled={loading}>
-            {loading ? 'Cargando...' : 'Ingresar'}
+            {loading ? 'Registrando...' : 'Crear cuenta'}
           </button>
         </form>
 
         <div className="footer-line">
-          <Link to="/registro">Crear cuenta</Link>
+          <Link to="/login">Iniciar sesión</Link>
         </div>
       </section>
     </main>
   )
 }
 
-export default LoginPage
+export default RegisterPage

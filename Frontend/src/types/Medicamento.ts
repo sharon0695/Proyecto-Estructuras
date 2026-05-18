@@ -5,4 +5,5 @@ export interface Medicamento {
   imagen: string;
   stock: number;
   categoria: string;
+  descripcion: string;
 }

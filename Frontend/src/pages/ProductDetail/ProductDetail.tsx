@@ -6,7 +6,6 @@ import styles from "./ProductDetail.module.scss";
 
 type DetailState = Medicamento & {
   descripcion?: string;
-  sku?: string;
   presentacion?: string;
 };
 
@@ -50,7 +49,6 @@ export default function ProductDetail() {
   const category = normalizeCategory(product?.categoria);
   const availableUnits = Math.max(Number(product?.stock ?? 0), 0);
   const isAvailable = availableUnits > 0;
-  const sku = product?.sku ?? `MED-${String(product?.id ?? id ?? "000000").slice(0, 8).toUpperCase()}`;
   const description =
     product?.descripcion ??
     `Producto de ${category.toLowerCase()} pensado para acompañarte en tu cuidado diario con una presentación confiable y práctica.`;
@@ -161,8 +159,8 @@ export default function ProductDetail() {
                 <strong>{isAvailable ? "En stock" : "Agotado"}</strong>
               </div>
               <div>
-                <span>SKU:</span>
-                <strong>{sku}</strong>
+                <span>ID:</span>
+                <strong>{product.id}</strong>
               </div>
             </div>
 

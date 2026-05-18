@@ -272,11 +272,25 @@ export default function ProductsPage() {
               const imageAlt = med.nombre || "Producto";
 
               return (
-                <article key={med.id} className={styles.productCard}>
+                <article
+                  key={med.id}
+                  className={styles.productCard}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/producto/${med.id}`, { state: med })}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      navigate(`/producto/${med.id}`, { state: med });
+                    }
+                  }}
+                >
                   <div className={styles.productTopLine}>
                     {hasOffer(index) ? <span className={styles.badgeOffer}>Oferta</span> : null}
                     {hasNewTag(index) ? <span className={styles.badgeNew}>Nuevo</span> : null}
-                    <button type="button" aria-label="Favorito">♡</button>
+                    <button type="button" aria-label="Favorito" onClick={(event) => event.stopPropagation()}>
+                      ♡
+                    </button>
                   </div>
 
                   <img src={med.imagen} alt={imageAlt} loading="lazy" />
@@ -289,7 +303,7 @@ export default function ProductsPage() {
                     {hasOffer(index) ? <span>{formatPrice(Number(med.precio) * 1.2)}</span> : null}
                   </div>
 
-                  <button type="button" disabled={med.stock <= 0}>
+                  <button type="button" disabled={med.stock <= 0} onClick={(event) => event.stopPropagation()}>
                     🛒 Agregar al carrito
                   </button>
                 </article>

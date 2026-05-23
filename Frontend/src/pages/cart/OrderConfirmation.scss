@@ -1,0 +1,318 @@
+.order-confirmation-page {
+  min-height: 100vh;
+  background: #EBF2FA;
+}
+
+.order-confirmation-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+}
+
+/* ---------- CARDS ---------- */
+
+.success-card,
+.timeline-card,
+.details-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* ---------- SUCCESS ---------- */
+
+.success-card {
+  text-align: center;
+}
+
+.success-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  background: #dcfce7;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.success-icon {
+  color: #16a34a;
+}
+
+.success-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: .8rem;
+}
+
+.success-description {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin-bottom: 1.8rem;
+}
+
+.order-number-box {
+  display: inline-block;
+  background: #EBF2FA;
+  border-radius: 1rem;
+  padding: 1rem 1.5rem;
+}
+
+.order-number-label {
+  font-size: .9rem;
+  color: #6b7280;
+  margin-bottom: .4rem;
+}
+
+.order-number {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #05668D;
+}
+
+/* ---------- TITLES ---------- */
+
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1.8rem;
+}
+
+.subsection-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+/* ---------- TIMELINE ---------- */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+
+  &.completed {
+    .timeline-icon {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .timeline-title {
+      color: #1f2937;
+    }
+  }
+}
+
+.timeline-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #6b7280;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-content {
+  flex: 1;
+}
+
+.timeline-title {
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: .3rem;
+}
+
+.timeline-date {
+  font-size: .9rem;
+  color: #9ca3af;
+}
+
+/* ---------- PRODUCTS ---------- */
+
+.products-section {
+  margin-bottom: 2rem;
+}
+
+.products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.product-item {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.product-image {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+
+  background: #f9fafb;
+  border-radius: .75rem;
+}
+
+.product-info {
+  flex: 1;
+}
+
+.product-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.product-quantity {
+  font-size: .9rem;
+  color: #6b7280;
+}
+
+.product-price {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* ---------- SHIPPING ---------- */
+
+.shipping-section {
+  padding-bottom: 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.shipping-info {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+
+  font-size: .95rem;
+  color: #6b7280;
+}
+
+.shipping-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.shipping-contact {
+  padding-top: .75rem;
+}
+
+/* ---------- PAYMENT ---------- */
+
+.payment-summary {
+  display: flex;
+  flex-direction: column;
+  gap: .8rem;
+}
+
+.payment-row,
+.payment-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payment-row {
+  color: #4b5563;
+}
+
+.payment-total {
+  margin-top: .6rem;
+  padding-top: 1rem;
+
+  border-top: 1px solid #e5e7eb;
+
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.total-price {
+  color: #679436;
+}
+
+/* ---------- ACTIONS ---------- */
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  .custom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+  }
+}
+
+/* ---------- EMAIL NOTICE ---------- */
+
+.email-notice {
+  padding: 1.5rem;
+
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 1rem;
+
+  text-align: center;
+
+  p {
+    color: #1e40af;
+    line-height: 1.6;
+  }
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 768px) {
+
+  .success-card,
+  .timeline-card,
+  .details-card {
+    padding: 1.5rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .success-title {
+    font-size: 1.7rem;
+  }
+
+  .section-title {
+    font-size: 1.2rem;
+  }
+
+  .product-item {
+    align-items: flex-start;
+  }
+}

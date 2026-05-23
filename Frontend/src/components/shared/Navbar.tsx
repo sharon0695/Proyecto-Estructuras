@@ -1,28 +1,39 @@
 import styles from "./Navbar.module.scss";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../../Firebase/config";
-import { signOut } from "firebase/auth";
-
+import { ShoppingCart, User } from "lucide-react";
 export default function Navbar() {
   const navigate = useNavigate();
 
   return (
-    <nav className={styles.navbar}>
-      
-      <div className={styles.logo}>
-        💊 FarmaApp
-      </div>
+    <header className={styles.topbar}>
+      <button className={styles.brand} onClick={() => navigate("/Home")}>
+        <span className={styles.brandLeaf}>🍃</span>
+        <span>FarmaciaR</span>
+      </button>
 
-      <div className={styles.links}>
-        <button onClick={() => navigate('/Home')}>Inicio</button>
-        <button onClick={() => navigate('/Productos')}>Productos</button>
-        <button onClick={() => navigate('/Carrito')}>🛒</button>
-        <button onClick={() => {
-          signOut(auth).then(() => {
-            navigate('/Login');
-          });
-        }}>Cerrar sesión</button>
+      <nav className={styles.menu}>
+        <button type="button" onClick={() => navigate("/Home")}>
+          Inicio
+        </button>
+        <button type="button" onClick={() => navigate("/Home")}>
+          Productos
+        </button>
+        <button type="button" onClick={() => navigate("/Home")}>
+          Ofertas
+        </button>
+        <button type="button" onClick={() => navigate("/Home")}>
+          Nosotros
+        </button>
+      </nav>
+
+      <div className={styles.topActions} onClick={() => navigate("/cart")}>
+        <button type="button" aria-label="Carrito" className={styles.iconBtn}>
+          <ShoppingCart />
+        </button>
+        <button type="button" aria-label="Perfil" className={styles.iconBtn}>
+          <User />
+        </button>
       </div>
-    </nav>
+    </header>
   );
 }

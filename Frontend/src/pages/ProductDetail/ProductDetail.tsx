@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMedicamentos } from "../../hooks/useMedicamento";
+import { useCart } from "../../context/CartContext";
 import type { Medicamento } from "../../types/Medicamento";
 import styles from "./ProductDetail.module.scss";
+import Navbar from "../../components/shared/Navbar";
+import {toast} from "sonner"
 
 type DetailState = Medicamento & {
   descripcion?: string;
@@ -35,6 +38,7 @@ export default function ProductDetail() {
   const locationState = location.state as DetailState | null;
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -78,6 +82,13 @@ export default function ProductDetail() {
 
   const selectedImage = galleryImages[activeImageIndex] ?? product.imagen;
 
+  const handleAddToCart = () => {
+    addToCart(product, quantity);
+    toast.success(`✓ ${quantity} ${quantity === 1 ? 'unidad agregada' : 'unidades agregadas'} al carrito`, {
+      duration: 2000,
+    });
+  };
+  
   const changeQuantity = (nextValue: number) => {
     const bounded = Math.min(Math.max(nextValue, 1), Math.max(availableUnits, 1));
     setQuantity(bounded);
@@ -85,36 +96,7 @@ export default function ProductDetail() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.topbar}>
-        <button className={styles.brand} onClick={() => navigate("/")}>
-          <span className={styles.brandLeaf}>🍃</span>
-          <span>FarmaciaR</span>
-        </button>
-
-        <nav className={styles.menu}>
-          <button type="button" onClick={() => navigate("/")}>
-            Inicio
-          </button>
-          <button type="button" onClick={() => navigate("/Home")}>
-            Productos
-          </button>
-          <button type="button" onClick={() => navigate("/Home")}>
-            Ofertas
-          </button>
-          <button type="button" onClick={() => navigate("/Home")}>
-            Nosotros
-          </button>
-        </nav>
-
-        <div className={styles.topActions}>
-          <button type="button" aria-label="Carrito" className={styles.iconBtn}>
-            🛒
-          </button>
-          <button type="button" aria-label="Perfil" className={styles.iconBtn}>
-            👤
-          </button>
-        </div>
-      </header>
+      <Navbar />
 
       <main className={styles.main}>
         <div className={styles.breadcrumbs}>
@@ -178,8 +160,8 @@ export default function ProductDetail() {
               <small>{availableUnits > 0 ? `${availableUnits} disponibles` : "Sin unidades disponibles"}</small>
             </div>
 
-            <button type="button" className={styles.cartButton} disabled={!isAvailable}>
-              🛒 Agregar al carrito
+            <button type="button" className={styles.cartButton} disabled={!isAvailable} onClick={(handleAddToCart)}>
+              Agregar al carrito
             </button>
 
             <div className={styles.perksRow}>

@@ -5,7 +5,7 @@ interface Props {
   medicamento: Medicamento;
 }
 
-export default function CardMedicamento({ medicamento }: Props) {
+export function CardMedicamento({ medicamento }: Props) {
   return (
     <div className={styles.card}>
       <img

@@ -1,10 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
 import { useMedicamentos } from "../../hooks/useMedicamento";
 import { usePromociones } from "../../hooks/usePromociones";
 import type { Medicamento } from "../../types/Medicamento";
 
+import {ShoppingCart, User} from "lucide-react"
 import styles from "./ProductsPage.module.scss";
+import { toast } from "sonner";
 
 type SortMode = "destacado" | "precio-asc" | "precio-desc";
 
@@ -48,6 +51,7 @@ function getPromoData(item: any) {
 }
 
 export default function ProductsPage() {
+  const {addToCart} = useCart();
   const navigate = useNavigate();
   const offersRef = useRef<HTMLElement | null>(null);
   const productsRef = useRef<HTMLElement | null>(null);
@@ -125,6 +129,13 @@ export default function ProductsPage() {
     return `$${numeric.toFixed(2)}`;
   };
 
+  const handleAddToCart = (product: Medicamento) => {
+    addToCart(product, 1);
+    toast.success(`✓ ${product.nombre} agregado al carrito`, {
+      duration: 2000,
+    });
+  };
+
   const scrollToSection = (target: React.RefObject<HTMLElement | null>) => {
     target.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -132,24 +143,24 @@ export default function ProductsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.topbar}>
-        <button className={styles.brand} onClick={() => navigate("/")}>
+        <button className={styles.brand} onClick={() => navigate("/Home")}>
           <span className={styles.brandLeaf}>🍃</span>
           <span>FarmaciaR</span>
         </button>
 
         <nav className={styles.menu}>
-          <button onClick={() => navigate("/")}>Inicio</button>
+          <button onClick={() => navigate("/Home")}>Inicio</button>
           <button type="button" onClick={() => scrollToSection(productsRef)}>Productos</button>
           <button type="button" onClick={() => scrollToSection(offersRef)}>Ofertas</button>
           <button type="button" onClick={() => scrollToSection(footerRef)}>Nosotros</button>
         </nav>
 
-        <div className={styles.topActions}>
+        <div className={styles.topActions} onClick={() => navigate("/cart")}>
           <button type="button" aria-label="Carrito" className={styles.iconBtn}>
-            🛒
+            <ShoppingCart />
           </button>
           <button type="button" aria-label="Perfil" className={styles.iconBtn}>
-            👤
+            <User />
           </button>
         </div>
       </header>
@@ -303,8 +314,8 @@ export default function ProductsPage() {
                     {hasOffer(index) ? <span>{formatPrice(Number(med.precio) * 1.2)}</span> : null}
                   </div>
 
-                  <button type="button" disabled={med.stock <= 0} onClick={(event) => event.stopPropagation()}>
-                    🛒 Agregar al carrito
+                  <button type="button" disabled={med.stock <= 0} onClick={() => handleAddToCart(med)}>
+                    Agregar al carrito
                   </button>
                 </article>
               );

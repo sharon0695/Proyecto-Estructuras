@@ -1,0 +1,46 @@
+.container {
+  position: relative;
+  width: 100%;
+}
+
+.input {
+  width: 90%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.dropdown {
+  position: absolute;
+  width: 100%;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  margin-top: 5px;
+  z-index: 10;
+}
+
+.item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: #f5e6ff;
+}
+
+.button {
+  margin-left: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #fcb1d6;
+  color: white;
+  cursor: pointer;
+}
+
+.search{
+    display:flex;
+    align-items: center;
+    ;
+}

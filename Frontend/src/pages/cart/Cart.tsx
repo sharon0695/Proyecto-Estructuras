@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useCart } from '../../context/CartContext';
+import { toast } from 'sonner';
 import type { Medicamento } from '../../types/Medicamento';
 import Navbar from '../../components/shared/Navbar';
 import { ArrowLeft, Plus, Minus, Trash2, Lock, CreditCard, Tag } from 'lucide-react';
@@ -19,7 +20,12 @@ export function Cart() {
     const updateQuantity = (id: string, delta: number) => {
         const item = cart.find(i => i.id === id);
         if (item) {
-            updateCartQuantity(id, item.quantity + delta);
+            const newQuantity = item.quantity + delta;
+            if (newQuantity <= 0) {
+                removeFromCart(id);
+            } else {
+                updateCartQuantity(id, newQuantity);
+            }
         }
     };
 
@@ -28,11 +34,15 @@ export function Cart() {
     };
 
     const applyCoupon = () => {
+        if (couponCode.trim() === '') {
+            toast.error('Por favor ingresa un código de cupón');
+            return;
+        }
         if (couponCode.toUpperCase() === 'DESCUENTO10') {
             setDiscount(0.10);
-            alert('¡Cupón aplicado! 10% de descuento');
+            toast.success('¡Cupón aplicado! 10% de descuento');
         } else {
-            alert('Cupón inválido');
+            toast.error('Cupón inválido');
         }
     };
 

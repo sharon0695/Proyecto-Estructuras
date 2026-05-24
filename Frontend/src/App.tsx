@@ -6,8 +6,9 @@ import ProductDetail from './pages/ProductDetail/ProductDetail'
 import ProductsPage from './pages/Products/ProductsPage'
 import { Cart } from './pages/cart/Cart'
 import { CartProvider } from './context/CartContext'
-import {Checkout} from './pages/cart/Checkout'
-import {OrderConfirmation}from './pages/cart/OrderConfirmation'
+import { Checkout } from './pages/cart/Checkout'
+import { OrderConfirmation } from './pages/cart/OrderConfirmation'
+import { ProtectedRoute } from './components/shared/ProtectedRoute'
 //import Admin from './pages/admin/Admin'
 
 function App() {
@@ -16,14 +17,15 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegisterPage />} />
-        <Route path="/producto/:id" element={<ProductDetail />} />
         <Route path="/" element={<Home />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-        <Route path="/Home" element={<ProductsPage />} />
 
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/order-confirmation" element={<OrderConfirmation />} />
+        <Route path="/Home" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
+        <Route path="/producto/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
+        <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+        <Route path="/order-confirmation" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
+        
+        <Route path="*" element={<Navigate to="/" replace />} />
         {
           //<Route path="/admin" element={<Admin />} />
         }

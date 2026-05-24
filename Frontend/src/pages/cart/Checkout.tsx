@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useCart } from '../../context/CartContext';
 import Navbar from '../../components/shared/Navbar';
 import { ArrowLeft, CreditCard, Building, Wallet, Lock, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../../Firebase/config';
+import { createOrder } from '../../services/orders.service';
+import type { Order } from '../../types/Orders';
 import "./checkout.scss"
 
 type PaymentMethod = 'card' | 'bank' | 'digital';
@@ -11,9 +15,17 @@ type PaymentMethod = 'card' | 'bank' | 'digital';
 export function Checkout() {
     const navigate = useNavigate();
     const { cart, getCartTotal, clearCart } = useCart();
-    const [step, setStep] = useState(1); // 1: Info, 2: Pago, 3: Revisión
+    const [step, setStep] = useState(1); 
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
     const [loading, setLoading] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUserId(user?.uid || null);
+        });
+        return unsubscribe;
+    }, []);
 
     const [shippingInfo, setShippingInfo] = useState({
         fullName: '',
@@ -71,32 +83,61 @@ export function Checkout() {
     };
 
     const handleConfirmOrder = async () => {
+        if (!userId) {
+            toast.error('No se pudo identificar el usuario');
+            return;
+        }
+
         setLoading(true);
 
-        // Simular procesamiento de pago
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        try {
+            // Simular procesamiento de pago
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Guardar orden en localStorage
-        const order = {
-            id: Date.now().toString(),
-            date: new Date().toISOString(),
-            items: cart,
-            shippingInfo,
-            paymentMethod,
-            subtotal,
-            shipping,
-            tax,
-            total,
-            status: 'Confirmado'
-        };
+            const [firstName, ...lastNameParts] = shippingInfo.fullName.split(' ');
+            const lastName = lastNameParts.join(' ') || '';
 
-        const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-        orders.push(order);
-        localStorage.setItem('orders', JSON.stringify(orders));
+            // Crear orden en Firestore
+            const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
+                userId,
+                items: cart,
+                subtotal,
+                discount: 0,
+                shipping,
+                total,
+                customerInfo: {
+                    firstName: firstName || shippingInfo.fullName,
+                    lastName,
+                    email: shippingInfo.email,
+                    phone: shippingInfo.phone,
+                    address: shippingInfo.address,
+                    city: shippingInfo.city,
+                    postalCode: shippingInfo.zipCode,
+                },
+                paymentMethod,
+                status: 'completed',
+            };
 
-        clearCart();
-        setLoading(false);
-        navigate('/order-confirmation', { state: { order } });
+            const createdOrder = await createOrder(orderData);
+
+            // Guardar orden en localStorage también (backup)
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            orders.push({
+                ...createdOrder,
+                shippingInfo,
+                cardInfo: { ...cardInfo, cardNumber: '****' }
+            });
+            localStorage.setItem('orders', JSON.stringify(orders));
+
+            toast.success('¡Orden confirmada exitosamente!');
+            clearCart();
+            setLoading(false);
+            navigate('/order-confirmation', { state: { order: createdOrder } });
+        } catch (error) {
+            console.error('Error creating order:', error);
+            toast.error('Error al crear la orden. Intenta de nuevo.');
+            setLoading(false);
+        }
     };
 
     const formatCardNumber = (value: string) => {

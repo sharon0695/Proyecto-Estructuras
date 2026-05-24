@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import {toast} from 'sonner'
 import type { Medicamento } from '../types/Medicamento';
 
 interface CartItem extends Medicamento {
@@ -28,6 +29,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCart(JSON.parse(savedCart));
       } catch (error) {
         console.error('Error loading cart:', error);
+        toast.error('Error al cargar el carrito')
       }
     }
   }, []);
@@ -37,32 +39,94 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cart]);
 
   const addToCart = (product: Medicamento, quantity: number = 1) => {
+    // Validate quantity
+    if (quantity <= 0) {
+      toast.error('La cantidad debe ser mayor a 0');
+      return;
+    }
+
+    if (quantity > product.stock) {
+      toast.error(`Solo hay ${product.stock} unidades disponibles`);
+      return;
+    }
+
     setCart(currentCart => {
       const existingItem = currentCart.find(item => item.id === product.id);
 
       if (existingItem) {
-        // Update quantity if item already exists
+        const newQuantity = existingItem.quantity + quantity;
+        
+        if (newQuantity > product.stock) {
+          toast.error(
+            `No puedes agregar más de ${product.stock} unidades de ${product.nombre}. Tienes ${existingItem.quantity}.`
+          );
+          return currentCart;
+        }
+
+        toast.success(
+          `✓ Cantidad actualizada a ${newQuantity}`,
+          {
+            duration: 2000,
+            description: product.nombre
+          }
+        );
+
         return currentCart.map(item =>
           item.id === product.id
-            ? { ...item, quantity: Math.min(item.quantity + quantity, product.stock) }
+            ? { ...item, quantity: Math.min(newQuantity, product.stock) }
             : item
         );
       } else {
-        // Add new item
+        toast.success(
+          `✓ Agregado al carrito`,
+          {
+            duration: 2000,
+            description: `${quantity}x ${product.nombre}`
+          }
+        );
+
         return [...currentCart, { ...product, quantity }];
       }
     });
   };
 
   const removeFromCart = (productId: string) => {
+    const product = cart.find(item => item.id === productId);
     setCart(currentCart => currentCart.filter(item => item.id !== productId));
+
+    if (product) {
+      toast.info(
+        `${product.nombre} removido del carrito`,
+        {
+          duration: 2000,
+          icon: '🗑️'
+        }
+      );
+    }
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+
+    const product = cart.find(item => item.id === productId);
+    
+    if (!product) {
+      toast.error('Producto no encontrado en el carrito');
+      return;
+    }
+
+    if (quantity > product.stock) {
+      toast.error(`Solo hay ${product.stock} unidades disponibles`);
+      return;
+    }
+
     setCart(currentCart =>
       currentCart.map(item =>
         item.id === productId
-          ? { ...item, quantity: Math.max(1, Math.min(quantity, item.stock)) }
+          ? { ...item, quantity: Math.max(1, Math.min(quantity, product.stock)) }
           : item
       )
     );
@@ -70,6 +134,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => {
     setCart([]);
+    toast.success('Carrito vaciado', { duration: 1500 });
   };
 
   const getCartTotal = () => {

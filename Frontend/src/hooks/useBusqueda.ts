@@ -25,22 +25,28 @@ export function useBusqueda(data: any[]) {
         setDropdown(true);
     }
 
-        const seleccionar = (texto: string) => {
-            setQuery(texto)
-            setResultados([])
-            setDropdown(false)
-        }
-
-        const submit = () => {
-            setDropdown(false)
-        }        
-
-        return {
-            query,
-            resultados,
-            buscar,
-            seleccionar,
-            submit,
-            dropdown
-        };
+    const seleccionar = (texto: string) => {
+        setQuery(texto)
+        setResultados([])
+        setDropdown(false)
     }
+
+    const submit = () => {
+        setDropdown(false)
+    }
+    const limpiar = () => {
+        setQuery("");
+        setResultados([]);
+        setDropdown(false);
+    };
+
+    return {
+        query,
+        resultados,
+        buscar,
+        seleccionar,
+        submit,
+        dropdown,
+        limpiar, 
+    };
+}

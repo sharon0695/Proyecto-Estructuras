@@ -3,15 +3,27 @@ import styles from "./SearchBar.module.scss";
 
 interface Props {
   data: any[];
+  onSearch: (query: string) => void; // ← nuevo
 }
 
-export default function SearchBar({ data }: Props) {
+export default function SearchBar({ data, onSearch }: Props) {
   const { query, resultados, buscar, seleccionar, submit, dropdown } = useBusqueda(data);
 
   const handleSumit = (e: React.FormEvent) => {
     e.preventDefault();
+    onSearch(query); 
     submit();
-  }
+  };
+
+  const handleSeleccionar = (res: string) => {
+    seleccionar(res);
+    onSearch(res); 
+  };
+
+  const handleBuscar = (texto: string) => {
+    buscar(texto);
+    onSearch(texto); 
+  };
 
   return (
     <div className={styles.container}>
@@ -21,10 +33,9 @@ export default function SearchBar({ data }: Props) {
             type="text"
             placeholder="Buscar medicamento..."
             value={query}
-            onChange={(e) => buscar(e.target.value)}
+            onChange={(e) => handleBuscar(e.target.value)}
             className={styles.input}
           />
-
           <button type="submit" className={styles.button}>Buscar</button>
         </div>
       </form>
@@ -35,7 +46,7 @@ export default function SearchBar({ data }: Props) {
             <div
               key={index}
               className={styles.item}
-              onClick={() => seleccionar(res)}
+              onClick={() => handleSeleccionar(res)} // ← actualizado
             >
               {res}
             </div>

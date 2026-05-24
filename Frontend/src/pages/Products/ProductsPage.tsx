@@ -3,9 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useMedicamentos } from "../../hooks/useMedicamento";
 import { usePromociones } from "../../hooks/usePromociones";
+import { signOut } from "firebase/auth";
+import { auth } from "../../Firebase/config";
+import SearchBar from "../../components/shared/SearchBar";
 import type { Medicamento } from "../../types/Medicamento";
 
-import {ShoppingCart, User} from "lucide-react"
+import { ShoppingCart, User } from "lucide-react"
 import styles from "./ProductsPage.module.scss";
 import { toast } from "sonner";
 
@@ -30,9 +33,11 @@ function stripAccents(value: string): string {
 }
 
 function normalizeCategoria(raw: unknown): string {
-  if (!raw || typeof raw !== "string") return "General";
+  const value = Array.isArray(raw) ? raw[0] : raw;
 
-  const cleaned = raw.trim();
+  if (!value || typeof value !== "string") return "General";
+
+  const cleaned = value.trim();
   if (!cleaned) return "General";
 
   return stripAccents(cleaned)
@@ -51,7 +56,7 @@ function getPromoData(item: any) {
 }
 
 export default function ProductsPage() {
-  const {addToCart} = useCart();
+  const { addToCart } = useCart();
   const navigate = useNavigate();
   const offersRef = useRef<HTMLElement | null>(null);
   const productsRef = useRef<HTMLElement | null>(null);
@@ -63,17 +68,25 @@ export default function ProductsPage() {
   const [sortMode, setSortMode] = useState<SortMode>("destacado");
   const [promoIndex, setPromoIndex] = useState(0);
   const [promoDirection, setPromoDirection] = useState<"next" | "prev">("next");
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const filteredMedicamentos = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    const normalizedCategory = normalizeCategoria(selectedCategory);
 
     let result = medicamentos.filter((med) => {
       const byName = med.nombre?.toLowerCase().includes(normalizedQuery);
-      const byCategory = normalizeCategoria(med.categoria).toLowerCase().includes(normalizedQuery);
+      const categorias = Array.isArray(med.categoria) ? med.categoria : [med.categoria];
+      const byCategory = categorias.some((cat) =>
+        normalizeCategoria(cat).toLowerCase().includes(normalizedQuery)
+      );
+
       const matchesSearch = normalizedQuery ? byName || byCategory : true;
       const matchesCategory =
-        normalizedCategory === "Todos" || normalizeCategoria(med.categoria) === normalizedCategory;
+        normalizeCategoria(selectedCategory) === "Todos" ||
+        categorias.some((cat) =>
+          normalizeCategoria(cat).includes(normalizeCategoria(selectedCategory)) ||
+          normalizeCategoria(selectedCategory).includes(normalizeCategoria(cat))
+        );
 
       return matchesSearch && matchesCategory;
     });
@@ -130,10 +143,12 @@ export default function ProductsPage() {
   };
 
   const handleAddToCart = (product: Medicamento) => {
+    if (product.stock <= 0) {
+      toast.error('Producto agotado');
+      return;
+    }
     addToCart(product, 1);
-    toast.success(`✓ ${product.nombre} agregado al carrito`, {
-      duration: 2000,
-    });
+    toast.success('Producto agregado al carrito correctamente')
   };
 
   const scrollToSection = (target: React.RefObject<HTMLElement | null>) => {
@@ -155,15 +170,38 @@ export default function ProductsPage() {
           <button type="button" onClick={() => scrollToSection(footerRef)}>Nosotros</button>
         </nav>
 
-        <div className={styles.topActions} onClick={() => navigate("/cart")}>
-          <button type="button" aria-label="Carrito" className={styles.iconBtn}>
+        <div className={styles.topActions}>
+          <button type="button" aria-label="Carrito" className={styles.iconBtn} onClick={() => navigate("/cart")}>
             <ShoppingCart />
           </button>
-          <button type="button" aria-label="Perfil" className={styles.iconBtn}>
-            <User />
-          </button>
+          <div className={styles.userMenuWrapper}>
+            <button
+              type="button"
+              aria-label="Perfil"
+              className={styles.iconBtn}
+              onClick={() => setShowUserMenu((prev) => !prev)}
+            >
+              <User />
+            </button>
+
+            {showUserMenu && (
+              <div className={styles.userDropdown}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    signOut(auth).then(() => {
+                      setShowUserMenu(false);
+                      navigate("/");
+                    });
+                  }}
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </header>
+      </header >
 
       <section className={styles.heroBanner}>
         <h1>Bienvenido a FarmaciaR</h1>
@@ -171,20 +209,14 @@ export default function ProductsPage() {
       </section>
 
       <section className={styles.searchSection}>
-        <div className={styles.searchRow}>
-          <span className={styles.searchIcon}>⌕</span>
-          <input
-            type="text"
-            placeholder="Busca medicamentos, vitaminas, marcas..."
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <button type="button">Buscar</button>
-        </div>
+        <SearchBar
+          data={medicamentos}
+          onSearch={(texto) => setQuery(texto)} 
+        />
 
         <div className={styles.quickTerms}>
           {QUICK_TERMS.map((term) => (
-            <button key={term} type="button" onClick={() => selectQuickTerm(term)}>
+            <button key={term} type="button" onClick={() => setQuery(term)}>
               <span>◌</span>
               {term}
             </button>
@@ -356,6 +388,6 @@ export default function ProductsPage() {
 
         <div className={styles.footerBottom}>© 2026 FarmaciaR. Todos los derechos reservados.</div>
       </footer>
-    </div>
+    </div >
   );
 }

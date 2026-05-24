@@ -83,6 +83,10 @@ export default function ProductDetail() {
   const selectedImage = galleryImages[activeImageIndex] ?? product.imagen;
 
   const handleAddToCart = () => {
+    if (quantity > availableUnits) {
+      toast.error(`Solo hay ${availableUnits} unidades disponibles`);
+      return;
+    }
     addToCart(product, quantity);
     toast.success(`✓ ${quantity} ${quantity === 1 ? 'unidad agregada' : 'unidades agregadas'} al carrito`, {
       duration: 2000,

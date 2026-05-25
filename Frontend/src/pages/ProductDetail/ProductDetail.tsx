@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMedicamentos } from "../../hooks/useMedicamento";
 import { useCart } from "../../context/CartContext";
+import { useHistorial } from "../../hooks/useHistorial";
+import { useRecomendaciones } from "../../hooks/useRecomendaciones";
 import type { Medicamento } from "../../types/Medicamento";
 import styles from "./ProductDetail.module.scss";
 import Navbar from "../../components/shared/Navbar";
@@ -39,6 +41,8 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const { addToCart } = useCart();
+  const { historial, registrarVisto } = useHistorial();
+  const { recomendar } = useRecomendaciones(medicamentos);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -57,6 +61,21 @@ export default function ProductDetail() {
     product?.descripcion ??
     `Producto de ${category.toLowerCase()} pensado para acompañarte en tu cuidado diario con una presentación confiable y práctica.`;
   const galleryImages = product ? [product.imagen, product.imagen, product.imagen] : [];
+  const recentItems = historial
+    .filter((item) => item.id !== product?.id)
+    .slice(0, 3);
+  let recomendaciones: Medicamento[] = [];
+  if (product) {
+    const fromGraph = recomendar(product.nombre).filter((item) => item.id !== product.id);
+    if (fromGraph.length > 0) {
+      recomendaciones = fromGraph;
+    } else {
+      // Fallback: sugerir por misma categoría si el grafo no arroja resultados
+      recomendaciones = medicamentos
+        .filter((m) => m.categoria === product.categoria && m.id !== product.id)
+        .slice(0, 3);
+    }
+  }
 
   if (!product && loading) {
     return (
@@ -79,6 +98,12 @@ export default function ProductDetail() {
       </div>
     );
   }
+
+  useEffect(() => {
+    if (product) {
+      registrarVisto(product);
+    }
+  }, [product?.id]);
 
   const selectedImage = galleryImages[activeImageIndex] ?? product.imagen;
 
@@ -235,6 +260,107 @@ export default function ProductDetail() {
             </button>
           </div>
         </section>
+
+        {historial.length > 0 ? (
+          <section className={styles.descriptionCard}>
+            <div className={styles.descriptionHeader}>
+              <h2>Vistos recientemente</h2>
+            </div>
+
+            <div className={styles.horizontalList}>
+              {recentItems.length > 0 ? recentItems.map((item) => (
+                  <div key={item.id} className={styles.miniCard}>
+                    <button
+                      type="button"
+                      className={styles.cardImageBtn}
+                      onClick={() => navigate(`/producto/${item.id}`, { state: item })}
+                    >
+                      <img src={item.imagen} alt={item.nombre} />
+                    </button>
+
+                    <div className={styles.cardBody}>
+                      <strong className={styles.cardTitle}>{item.nombre}</strong>
+                      <span className={styles.cardPrice}>{formatPrice(item.precio)}</span>
+                      <div className={styles.cardActions}>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/producto/${item.id}`, { state: item })}
+                          className={styles.viewBtn}
+                        >
+                          Ver
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => addToCart(item, 1)}
+                          className={styles.addSmallBtn}
+                          disabled={item.stock <= 0}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                <div className={styles.emptyStateCard}>
+                  Sigue explorando productos para ver aquí los que acabas de visitar.
+                </div>
+              )}
+            </div>
+          </section>
+        ) : null}
+
+        {recomendaciones.length > 0 ? (
+          <section className={styles.descriptionCard}>
+            <div className={styles.descriptionHeader}>
+              <h2>Recomendaciones</h2>
+            </div>
+
+            <div className={styles.horizontalList}>
+              {recomendaciones.slice(0, 3).map((item) => (
+                <div key={item.id} className={styles.miniCard}>
+                  <button
+                    type="button"
+                    className={styles.cardImageBtn}
+                    onClick={() => navigate(`/producto/${item.id}`, { state: item })}
+                  >
+                    <img src={item.imagen} alt={item.nombre} />
+                  </button>
+
+                  <div className={styles.cardBody}>
+                    <strong className={styles.cardTitle}>{item.nombre}</strong>
+                    <span className={styles.cardPrice}>{formatPrice(item.precio)}</span>
+                    <div className={styles.cardActions}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/producto/${item.id}`, { state: item })}
+                        className={styles.viewBtn}
+                      >
+                        Ver
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addToCart(item, 1)}
+                        className={styles.addSmallBtn}
+                        disabled={item.stock <= 0}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section className={styles.descriptionCard}>
+            <div className={styles.descriptionHeader}>
+              <h2>Recomendaciones</h2>
+            </div>
+            <div className={styles.emptyStateCard}>
+              No encontramos recomendaciones relacionadas todavía, pero puedes seguir navegando el catálogo.
+            </div>
+          </section>
+        )}
       </main>
 
       <footer className={styles.footer}>

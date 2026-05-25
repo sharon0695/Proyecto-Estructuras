@@ -1,15 +1,22 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Trie } from "../structures/trie";
 
 export function useBusqueda(data: any[]) {
-    const [trie] = useState(new Trie());
+    const trie = useMemo(() => {
+        const nuevoTrie = new Trie();
+
+        data.forEach(item => {
+            if (item?.nombre) {
+                nuevoTrie.insertar(item.nombre);
+            }
+        });
+
+        return nuevoTrie;
+    }, [data]);
+
     const [query, setQuery] = useState("");
     const [resultados, setResultados] = useState<string[]>([]);
     const [dropdown, setDropdown] = useState(false);
-
-    useEffect(() => {
-        data.forEach(item => trie.insertar(item.nombre));
-    }, [data]);
 
     const buscar = (texto: string) => {
         setQuery(texto);

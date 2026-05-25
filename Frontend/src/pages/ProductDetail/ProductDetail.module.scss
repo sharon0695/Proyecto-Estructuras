@@ -533,3 +533,96 @@
     font-size: 1.45rem;
   }
 }
+
+/* Horizontal list of mini cards for recommendations and recent */
+.horizontalList {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 12px 4px 6px;
+}
+
+.miniCard {
+  min-width: 220px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 26px rgba(34, 65, 96, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cardImageBtn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: block;
+}
+
+.cardImageBtn img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.cardBody {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardTitle {
+  font-size: 0.98rem;
+  color: #17324c;
+}
+
+.cardPrice {
+  color: #5f9d2f;
+  font-weight: 800;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.viewBtn {
+  flex: 1 1 auto;
+  border: none;
+  background: #e7f3ff;
+  color: #1165a3;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.addSmallBtn {
+  width: 40px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: #6ea03c;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.emptyStateCard {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f7f9fc;
+  border: 1px dashed #c8d5e3;
+  color: #5d6d7f;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 560px) {
+  .miniCard {
+    min-width: 180px;
+  }
+}

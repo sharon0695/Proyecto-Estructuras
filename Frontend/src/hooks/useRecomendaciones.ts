@@ -3,7 +3,7 @@ import { Grafo } from "../structures/grafo";
 import { relaciones } from "../helpers/relaciones";
 
 export function useRecomendaciones(medicamentos: any[]) {
-  const [grafo] = useState(new Grafo<string>());
+  const [grafo] = useState(() => new Grafo<string>());
 
   useEffect(() => {
     relaciones.forEach(([a, b]) => {
@@ -14,8 +14,12 @@ export function useRecomendaciones(medicamentos: any[]) {
   const recomendar = (nombre: string) => {
     const cercanos = grafo.buscarCercanos(nombre, 2);
 
-    return medicamentos.filter(m =>
-      cercanos.includes(m.nombre) && m.stock > 0
+    return Array.from(
+      new Map(
+        medicamentos
+          .filter(m => cercanos.includes(m.nombre))
+          .map((item) => [item.id, item])
+      ).values()
     );
   };
 

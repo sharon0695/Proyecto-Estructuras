@@ -7,5 +7,11 @@ al nodo más cercano que sea un sustituto válido para ofrecérselo al cliente
 export const relaciones = [
   ["Ibuprofeno", "Paracetamol"],
   ["Ibuprofeno", "Aspirina"],
-  ["Paracetamol", "Aspirina"]
+  ["Paracetamol", "Aspirina"],
+  ["Loratadina", "Cetirizina"],
+  ["Omeprazol", "Esomeprazol"],
+  ["Naproxeno", "Diclofenaco"],
+  ["Amoxicilina", "Azitromicina"],
+  ["Vitamina C", "Multivitaminico"],
+  ["Salbutamol", "Budesonida"]
 ];

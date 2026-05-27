@@ -5,6 +5,10 @@
 - Alan Basante
 - Yenaro Samuel Gracia Ruiz
 
+### Enlaces del proyecto
+- [Figma / Propuesta grafica](https://latte-erupt-11514629.figma.site)
+- [Enlace a Netlify](https://farmaciar.netlify.app/)
+
 ## Alcance del sistema y tecnologías utilizadas
 
 ### Alcance del sistema

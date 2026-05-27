@@ -6,7 +6,7 @@ import { ArrowLeft, CreditCard, Building, Wallet, Lock, CheckCircle } from 'luci
 import { toast } from 'sonner';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../Firebase/config';
-import { createOrder } from '../../services/orders.service';
+import { createOrderWithStockUpdate } from '../../services/orders.service';
 import type { Order } from '../../types/Orders';
 import "./checkout.scss"
 
@@ -104,6 +104,7 @@ export function Checkout() {
                 subtotal,
                 discount: 0,
                 shipping,
+                tax,
                 total,
                 customerInfo: {
                     firstName: firstName || shippingInfo.fullName,
@@ -114,11 +115,22 @@ export function Checkout() {
                     city: shippingInfo.city,
                     postalCode: shippingInfo.zipCode,
                 },
+                shippingInfo: {
+                    fullName: shippingInfo.fullName,
+                    email: shippingInfo.email,
+                    phone: shippingInfo.phone,
+                    address: shippingInfo.address,
+                    city: shippingInfo.city,
+                    state: shippingInfo.state,
+                    zipCode: shippingInfo.zipCode,
+                    country: shippingInfo.country,
+                },
                 paymentMethod,
                 status: 'completed',
+                date: new Date().toISOString(),
             };
 
-            const createdOrder = await createOrder(orderData);
+            const createdOrder = await createOrderWithStockUpdate(orderData, cart);
 
             // Guardar orden en localStorage también (backup)
             const orders = JSON.parse(localStorage.getItem('orders') || '[]');

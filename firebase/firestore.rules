@@ -1,0 +1,75 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDocPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(userDocPath())
+        && get(userDocPath()).data.role == 'admin';
+    }
+
+    function isSelf(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function validOrder(order) {
+      return order.userId is string
+        && order.userId == request.auth.uid
+        && order.items is list
+        && order.items.size() > 0
+        && order.subtotal is number
+        && order.total is number
+        && order.shipping is number
+        && order.status in ['pending', 'completed', 'cancelled']
+        && order.paymentMethod is string;
+    }
+
+    match /users/{userId} {
+      allow create: if isSelf(userId)
+        && request.resource.data.keys().hasOnly(['email', 'createdAt'])
+        && request.resource.data.email is string;
+
+      allow read: if isSelf(userId) || isAdmin();
+
+      allow update: if isAdmin()
+        || (isSelf(userId)
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.email == resource.data.email);
+
+      allow delete: if isAdmin();
+    }
+
+    match /medicamentos/{medicamentoId} {
+      allow read: if signedIn();
+
+      allow create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (signedIn()
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['stock', 'updatedAt'])
+          && request.resource.data.stock is number
+          && request.resource.data.stock <= resource.data.stock);
+    }
+
+    match /promociones/{promocionId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow create: if signedIn() && validOrder(request.resource.data);
+
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+
+      allow update, delete: if isAdmin();
+    }
+  }
+}

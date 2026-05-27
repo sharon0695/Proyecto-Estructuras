@@ -9,10 +9,13 @@ import {
   where,
   updateDoc,
   Timestamp,
+  runTransaction,
 } from "firebase/firestore";
 import type { Order } from "../types/Orders";
+import type { CartItem } from "../types/Orders";
 
 const ORDERS_COLLECTION = "orders";
+const MEDICAMENTOS_COLLECTION = "medicamentos";
 
 export const createOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => {
   try {
@@ -26,6 +29,56 @@ export const createOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updat
     return { id: docRef.id, ...orderData };
   } catch (error) {
     console.error("Error creating order:", error);
+    throw error;
+  }
+};
+
+export const createOrderWithStockUpdate = async (
+  order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>,
+  items: CartItem[]
+) => {
+  try {
+    return await runTransaction(db, async (transaction) => {
+      const productRefs = items.map((item) => doc(db, MEDICAMENTOS_COLLECTION, item.id));
+      const productSnapshots = await Promise.all(productRefs.map((ref) => transaction.get(ref)));
+
+      productSnapshots.forEach((snapshot, index) => {
+        if (!snapshot.exists()) {
+          throw new Error(`El medicamento ${items[index].nombre} no existe.`);
+        }
+
+        const currentStock = Number(snapshot.data()?.stock ?? 0);
+        const requestedQuantity = Number(items[index].quantity ?? 0);
+
+        if (requestedQuantity > currentStock) {
+          throw new Error(`No hay suficiente stock para ${items[index].nombre}.`);
+        }
+      });
+
+      productRefs.forEach((ref, index) => {
+        const currentStock = Number(productSnapshots[index].data()?.stock ?? 0);
+        const requestedQuantity = Number(items[index].quantity ?? 0);
+
+        transaction.update(ref, {
+          stock: currentStock - requestedQuantity,
+          updatedAt: Timestamp.now(),
+        });
+      });
+
+      const orderRef = doc(collection(db, ORDERS_COLLECTION));
+      const orderData = {
+        ...order,
+        date: order.date ?? new Date().toISOString(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      transaction.set(orderRef, orderData);
+
+      return { id: orderRef.id, ...orderData };
+    });
+  } catch (error) {
+    console.error("Error creating order with stock update:", error);
     throw error;
   }
 };

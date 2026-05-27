@@ -14,25 +14,25 @@ interface CartContextType {
   clearCart: () => void;
   getCartTotal: () => number;
   getCartCount: () => number;
+  lastAdded?: { product: Medicamento; quantity: number } | null;
+  clearLastAdded?: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([]);
-
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem('farmaciaRCart');
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Error loading cart:', error);
-        toast.error('Error al cargar el carrito')
-      }
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('farmaciaRCart');
+      return saved ? JSON.parse(saved) as CartItem[] : [];
+    } catch (err) {
+      console.error('Error parsing saved cart', err);
+      return [];
     }
-  }, []);
+  });
+
+  // last added item to show confirmation modal
+  const [lastAdded, setLastAdded] = useState<{ product: Medicamento; quantity: number } | null>(null);
 
   useEffect(() => {
     localStorage.setItem('farmaciaRCart', JSON.stringify(cart));
@@ -84,11 +84,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
             description: `${quantity}x ${product.nombre}`
           }
         );
-
-        return [...currentCart, { ...product, quantity }];
+        const next = [...currentCart, { ...product, quantity }];
+        // expose last added for UI confirmation
+        setLastAdded({ product, quantity });
+        return next;
       }
     });
   };
+
+  const clearLastAdded = () => setLastAdded(null);
 
   const removeFromCart = (productId: string) => {
     const product = cart.find(item => item.id === productId);
@@ -155,6 +159,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         getCartTotal,
         getCartCount
+        ,
+        lastAdded,
+        clearLastAdded
       }}
     >
       {children}

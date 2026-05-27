@@ -11,6 +11,7 @@ export interface Order {
   subtotal: number;
   discount: number;
   shipping: number;
+  tax?: number;
   total: number;
   customerInfo: {
     firstName: string;
@@ -21,8 +22,19 @@ export interface Order {
     city: string;
     postalCode: string;
   };
+  shippingInfo?: {
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   paymentMethod: string;
   status: 'pending' | 'completed' | 'cancelled';
+  date?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,0 +1,132 @@
+{
+  "users": [
+    {
+      "id": "ADMIN_UID_AQUI",
+      "email": "admin@farmaciar.com",
+      "role": "admin",
+      "createdAt": "2026-05-24T00:00:00.000Z"
+    },
+    {
+      "id": "USER_UID_AQUI",
+      "email": "cliente@farmaciar.com",
+      "role": "user",
+      "createdAt": "2026-05-24T00:00:00.000Z"
+    }
+  ],
+  "medicamentos": [
+    {
+      "id": "paracetamol-500",
+      "nombre": "Paracetamol 500 mg",
+      "precio": 4.5,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Paracetamol",
+      "stock": 48,
+      "categoria": "Analgésicos",
+      "descripcion": "Alivio temporal del dolor y la fiebre."
+    },
+    {
+      "id": "ibuprofeno-400",
+      "nombre": "Ibuprofeno 400 mg",
+      "precio": 5.9,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Ibuprofeno",
+      "stock": 26,
+      "categoria": "Analgésicos",
+      "descripcion": "Antiinflamatorio de uso común para dolor leve a moderado."
+    },
+    {
+      "id": "loratadina-10",
+      "nombre": "Loratadina 10 mg",
+      "precio": 6.25,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Loratadina",
+      "stock": 0,
+      "categoria": "Antialérgicos",
+      "descripcion": "Ayuda a controlar síntomas de alergia estacional."
+    },
+    {
+      "id": "cetirizina-10",
+      "nombre": "Cetirizina 10 mg",
+      "precio": 6.1,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Cetirizina",
+      "stock": 19,
+      "categoria": "Antialérgicos",
+      "descripcion": "Antihistamínico para rinitis y urticaria."
+    },
+    {
+      "id": "vitamina-c-1000",
+      "nombre": "Vitamina C 1000 mg",
+      "precio": 8.75,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Vitamina+C",
+      "stock": 32,
+      "categoria": "Vitaminas",
+      "descripcion": "Complemento vitamínico de apoyo diario."
+    },
+    {
+      "id": "complex-b",
+      "nombre": "Complejo B",
+      "precio": 9.4,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Complejo+B",
+      "stock": 14,
+      "categoria": "Vitaminas",
+      "descripcion": "Apoyo al metabolismo energético y sistema nervioso."
+    },
+    {
+      "id": "omeprazol-20",
+      "nombre": "Omeprazol 20 mg",
+      "precio": 7.8,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Omeprazol",
+      "stock": 24,
+      "categoria": "Digestivo",
+      "descripcion": "Protección gástrica y control de acidez."
+    },
+    {
+      "id": "buscapina",
+      "nombre": "Buscapina",
+      "precio": 6.95,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Buscapina",
+      "stock": 11,
+      "categoria": "Digestivo",
+      "descripcion": "Alivio de espasmos y molestias abdominales."
+    },
+    {
+      "id": "salbutamol",
+      "nombre": "Salbutamol Inhalador",
+      "precio": 13.5,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Salbutamol",
+      "stock": 9,
+      "categoria": "Respiratorio",
+      "descripcion": "Broncodilatador de uso respiratorio."
+    },
+    {
+      "id": "jarabe-tos",
+      "nombre": "Jarabe para la Tos",
+      "precio": 7.2,
+      "imagen": "https://placehold.co/600x400/f4f8fb/17324c?text=Jarabe+Tos",
+      "stock": 16,
+      "categoria": "Respiratorio",
+      "descripcion": "Apoyo sintomático para tos seca o irritativa."
+    }
+  ],
+  "promociones": [
+    {
+      "id": "promo-1",
+      "titulo": "Semana de cuidado familiar",
+      "descripcion": "Hasta 20% de descuento en vitaminas y analgésicos.",
+      "imagen": "https://placehold.co/900x400/d7efe2/17324c?text=Promoci%C3%B3n+1",
+      "etiqueta": "OFERTA"
+    },
+    {
+      "id": "promo-2",
+      "titulo": "Salud respiratoria",
+      "descripcion": "Productos seleccionados para aliviar alergias y tos.",
+      "imagen": "https://placehold.co/900x400/dfeaff/17324c?text=Promoci%C3%B3n+2",
+      "etiqueta": "NUEVO"
+    },
+    {
+      "id": "promo-3",
+      "titulo": "Cuidado digestivo",
+      "descripcion": "Opciones para acidez, espasmos y malestar estomacal.",
+      "imagen": "https://placehold.co/900x400/f7e9d7/17324c?text=Promoci%C3%B3n+3",
+      "etiqueta": "TOP"
+    }
+  ],
+  "orders": []
+}

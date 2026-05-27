@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useMedicamentos } from "../../hooks/useMedicamento";
 import { usePromociones } from "../../hooks/usePromociones";
+import { useCategorias } from "../../hooks/useCategorias";
 import { signOut } from "firebase/auth";
 import { auth } from "../../Firebase/config";
 import SearchBar from "../../components/shared/SearchBar";
@@ -11,22 +12,11 @@ import type { Medicamento } from "../../types/Medicamento";
 import { ShoppingCart, User } from "lucide-react"
 import styles from "./ProductsPage.module.scss";
 import { toast } from "sonner";
+import { useAuth } from "../../context/AuthContext";
 
 type SortMode = "destacado" | "precio-asc" | "precio-desc";
 
 const QUICK_TERMS = ["Ibuprofeno", "Vitamina C", "Loratadina"];
-
-const CATEGORY_OPTIONS = [
-  { label: "Todos", icon: "◉" },
-  { label: "Analgésicos", icon: "💊" },
-  { label: "Vitaminas", icon: "⚕" },
-  { label: "Antibióticos", icon: "🧪" },
-  { label: "Dermatología", icon: "💧" },
-  { label: "Digestivo", icon: "◍" },
-  { label: "Cardiovascular", icon: "❤" },
-  { label: "Infantil", icon: "◔" },
-  { label: "Cuidado Personal", icon: "✦" },
-];
 
 function stripAccents(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -56,11 +46,13 @@ function getPromoData(item: any) {
 }
 
 export default function ProductsPage() {
-  const { addToCart } = useCart();
+  const { addToCart, getCartCount } = useCart();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const offersRef = useRef<HTMLElement | null>(null);
   const productsRef = useRef<HTMLElement | null>(null);
   const footerRef = useRef<HTMLElement | null>(null);
+  const { categorias } = useCategorias();
   const { data: promociones } = usePromociones<any>();
   const { data: medicamentos, loading } = useMedicamentos();
   const [query, setQuery] = useState("");
@@ -69,6 +61,13 @@ export default function ProductsPage() {
   const [promoIndex, setPromoIndex] = useState(0);
   const [promoDirection, setPromoDirection] = useState<"next" | "prev">("next");
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const cartCount = getCartCount();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setShowUserMenu(false);
+    navigate('/');
+  };
 
   const filteredMedicamentos = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -97,6 +96,22 @@ export default function ProductsPage() {
 
     if (sortMode === "precio-desc") {
       result = [...result].sort((a, b) => Number(b.precio) - Number(a.precio));
+    }
+
+    // Diversify: when a specific category is selected, mix in some random items
+    if (normalizeCategoria(selectedCategory) !== "Todos") {
+      const other = medicamentos.filter((m) => !result.some((r) => r.id === m.id));
+      // shuffle other
+      for (let i = other.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [other[i], other[j]] = [other[j], other[i]];
+      }
+      const extras = other.slice(0, Math.min(6, other.length));
+      const combined = [...result, ...extras];
+      // unique by id
+      const map = new Map<string, Medicamento>();
+      combined.forEach((it) => map.set(it.id, it));
+      return Array.from(map.values());
     }
 
     return result;
@@ -128,10 +143,6 @@ export default function ProductsPage() {
     if (index === promoIndex) return;
     setPromoDirection(index > promoIndex ? "next" : "prev");
     setPromoIndex(index);
-  };
-
-  const selectQuickTerm = (term: string) => {
-    setQuery(term);
   };
 
   const hasOffer = (index: number) => index % 4 === 0;
@@ -171,8 +182,9 @@ export default function ProductsPage() {
         </nav>
 
         <div className={styles.topActions}>
-          <button type="button" aria-label="Carrito" className={styles.iconBtn} onClick={() => navigate("/cart")}>
+          <button type="button" aria-label="Carrito" className={styles.iconBtn} onClick={() => navigate("/cart")}> 
             <ShoppingCart />
+            {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
           </button>
           <div className={styles.userMenuWrapper}>
             <button
@@ -186,14 +198,17 @@ export default function ProductsPage() {
 
             {showUserMenu && (
               <div className={styles.userDropdown}>
+                <button type="button" onClick={() => navigate('/profile')}>
+                  Mi perfil
+                </button>
+                {isAdmin ? (
+                  <button type="button" onClick={() => navigate('/admin')}>
+                    Panel admin
+                  </button>
+                ) : null}
                 <button
                   type="button"
-                  onClick={() => {
-                    signOut(auth).then(() => {
-                      setShowUserMenu(false);
-                      navigate("/");
-                    });
-                  }}
+                  onClick={handleLogout}
                 >
                   Cerrar sesión
                 </button>
@@ -276,7 +291,7 @@ export default function ProductsPage() {
         <h2>Explorar por categoría</h2>
 
         <div className={styles.categoryGrid}>
-          {CATEGORY_OPTIONS.map((category) => {
+          {[{ label: "Todos", icon: "◉" }, ...categorias].map((category) => {
             const active = selectedCategory === category.label;
 
             return (

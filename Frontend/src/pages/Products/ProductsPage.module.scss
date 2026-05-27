@@ -57,6 +57,7 @@
 }
 
 .iconBtn {
+  position: relative;
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -64,6 +65,22 @@
   background: #fff;
   padding: 0;
   cursor: pointer;
+}
+
+.cartBadge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 12px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: inline-grid;
+  place-items: center;
 }
 
 .heroBanner {

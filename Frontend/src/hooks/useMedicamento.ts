@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMedicamentos } from "../services/medicamentos.service";
+import { subscribeMedicamentos } from "../services/medicamentos.service";
 import type { Medicamento } from "../types/Medicamento";
 
 export function useMedicamentos() {
@@ -7,10 +7,14 @@ export function useMedicamentos() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getMedicamentos().then((res: any) => {
-      setData(res);
+    const unsubscribe = subscribeMedicamentos((res) => {
+      setData(res as Medicamento[]);
+      setLoading(false);
+    }, () => {
       setLoading(false);
     });
+
+    return unsubscribe;
   }, []);
 
   return { data, loading };

@@ -9,6 +9,14 @@ class NodoTrie {
     }}
 }
 
+function normalizarTexto(texto: string) {
+    return texto
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+}
+
 export class Trie {
     root: NodoTrie
     constructor() {
@@ -17,8 +25,9 @@ export class Trie {
 
     insertar(palabra: string) {
         let nodo = this.root;
+        const texto = normalizarTexto(palabra);
 
-        for (const letra of palabra.toLowerCase()) {
+        for (const letra of texto) {
             if (!nodo.hijos.has(letra)) {
                 nodo.hijos.set(letra, new NodoTrie(letra));
             }
@@ -30,13 +39,14 @@ export class Trie {
 
     buscarPrefijo(prefijo: string): string[] {
         let nodo = this.root;
+        const texto = normalizarTexto(prefijo);
 
-        for (const letra of prefijo.toLowerCase()) {
+        for (const letra of texto) {
             if (!nodo.hijos.has(letra)) return [];
             nodo = nodo.hijos.get(letra)!;
         }
 
-        return this.obtenerPalabras(nodo, prefijo);
+        return Array.from(new Set(this.obtenerPalabras(nodo, texto)));
     }
 
     private obtenerPalabras(nodo: NodoTrie, prefijo: string): string[] {

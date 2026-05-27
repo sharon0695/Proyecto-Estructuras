@@ -1,20 +1,9 @@
-import { CartProvider } from './context/CartContext'
-import { AuthProvider } from './context/AuthContext'
-import { DataProvider } from './context/DataContext'
-import AppRoutes from './router/AppRoutes'
-import AddConfirmationModal from './components/shared/AddConfirmationModal'
+import AppRoutes from "./router/AppRoutes";
 
 function App() {
-  return (
-    <AuthProvider>
-      <DataProvider>
-        <CartProvider>
-          <AddConfirmationModal />
-          <AppRoutes />
-        </CartProvider>
-      </DataProvider>
-    </AuthProvider>
-  )
+  return <AppRoutes />;
 }
 
-export default App
+export default App;
+
+

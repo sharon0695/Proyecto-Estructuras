@@ -1,178 +1,147 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import {toast} from 'sonner'
-import type { Medicamento } from '../types/Medicamento';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import type { Medicamento } from "../types/Medicamento";
+import { updateMedicamentoStock } from "../services/medicamentos.service";
+import { crearOrden } from "../services/ordenes.service";
 
-interface CartItem extends Medicamento {
+export interface CartItem {
+  product: Medicamento;
   quantity: number;
 }
 
 interface CartContextType {
-  cart: CartItem[];
-  addToCart: (product: Medicamento, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
-  getCartTotal: () => number;
-  getCartCount: () => number;
-  lastAdded?: { product: Medicamento; quantity: number } | null;
-  clearLastAdded?: () => void;
+  cartItems: CartItem[];
+  addToCart: (product: Medicamento, quantity: number) => Promise<void>;
+  updateQuantity: (productId: string, newQuantity: number) => Promise<void>;
+  removeFromCart: (productId: string) => Promise<void>;
+  clearCart: () => Promise<void>;
+  placeOrder: (cliente: { nombre: string; direccion: string; telefono: string; metodoPago: string }) => Promise<void>;
+  totalItems: number;
+  totalPrice: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('farmaciaRCart');
-      return saved ? JSON.parse(saved) as CartItem[] : [];
-    } catch (err) {
-      console.error('Error parsing saved cart', err);
-      return [];
-    }
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart debe usarse dentro de un CartProvider");
+  }
+  return context;
+};
+
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    const savedCart = localStorage.getItem("cart");
+    return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  // last added item to show confirmation modal
-  const [lastAdded, setLastAdded] = useState<{ product: Medicamento; quantity: number } | null>(null);
-
   useEffect(() => {
-    localStorage.setItem('farmaciaRCart', JSON.stringify(cart));
-  }, [cart]);
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+  }, [cartItems]);
 
-  const addToCart = (product: Medicamento, quantity: number = 1) => {
-    // Validate quantity
-    if (quantity <= 0) {
-      toast.error('La cantidad debe ser mayor a 0');
-      return;
+  const updateFirestoreStock = async (productId: string, change: number) => {
+    try {
+      await updateMedicamentoStock(productId, change);
+    } catch (error) {
+      console.error("Error al actualizar el stock en Firestore:", error);
     }
+  };
 
-    if (quantity > product.stock) {
-      toast.error(`Solo hay ${product.stock} unidades disponibles`);
-      return;
-    }
+  const addToCart = async (product: Medicamento, quantity: number) => {
+    if (quantity <= 0) return;
+    
+    // Decrement database stock by the added quantity
+    await updateFirestoreStock(product.id, -quantity);
 
-    setCart(currentCart => {
-      const existingItem = currentCart.find(item => item.id === product.id);
-
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find((item) => item.product.id === product.id);
       if (existingItem) {
-        const newQuantity = existingItem.quantity + quantity;
-        
-        if (newQuantity > product.stock) {
-          toast.error(
-            `No puedes agregar más de ${product.stock} unidades de ${product.nombre}. Tienes ${existingItem.quantity}.`
-          );
-          return currentCart;
-        }
-
-        toast.success(
-          `✓ Cantidad actualizada a ${newQuantity}`,
-          {
-            duration: 2000,
-            description: product.nombre
-          }
-        );
-
-        return currentCart.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: Math.min(newQuantity, product.stock) }
+        return prevItems.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-      } else {
-        toast.success(
-          `✓ Agregado al carrito`,
-          {
-            duration: 2000,
-            description: `${quantity}x ${product.nombre}`
-          }
-        );
-        const next = [...currentCart, { ...product, quantity }];
-        // expose last added for UI confirmation
-        setLastAdded({ product, quantity });
-        return next;
       }
+      return [...prevItems, { product, quantity }];
     });
   };
 
-  const clearLastAdded = () => setLastAdded(null);
+  const updateQuantity = async (productId: string, newQuantity: number) => {
+    const item = cartItems.find((i) => i.product.id === productId);
+    if (!item || newQuantity <= 0) return;
 
-  const removeFromCart = (productId: string) => {
-    const product = cart.find(item => item.id === productId);
-    setCart(currentCart => currentCart.filter(item => item.id !== productId));
+    const diff = newQuantity - item.quantity;
+    if (diff === 0) return;
 
-    if (product) {
-      toast.info(
-        `${product.nombre} removido del carrito`,
-        {
-          duration: 2000,
-          icon: '🗑️'
-        }
-      );
-    }
-  };
+    // Decrement database stock by the difference
+    await updateFirestoreStock(productId, -diff);
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-
-    const product = cart.find(item => item.id === productId);
-    
-    if (!product) {
-      toast.error('Producto no encontrado en el carrito');
-      return;
-    }
-
-    if (quantity > product.stock) {
-      toast.error(`Solo hay ${product.stock} unidades disponibles`);
-      return;
-    }
-
-    setCart(currentCart =>
-      currentCart.map(item =>
-        item.id === productId
-          ? { ...item, quantity: Math.max(1, Math.min(quantity, product.stock)) }
-          : item
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.product.id === productId ? { ...item, quantity: newQuantity } : item
       )
     );
   };
 
-  const clearCart = () => {
-    setCart([]);
-    toast.success('Carrito vaciado', { duration: 1500 });
+  const removeFromCart = async (productId: string) => {
+    const item = cartItems.find((i) => i.product.id === productId);
+    if (!item) return;
+
+    // Refund/increment database stock by the full quantity in the cart
+    await updateFirestoreStock(productId, item.quantity);
+
+    setCartItems((prevItems) => prevItems.filter((item) => item.product.id !== productId));
   };
 
-  const getCartTotal = () => {
-    return cart.reduce((total, item) => total + item.precio * item.quantity, 0);
+  const clearCart = async () => {
+    // Refund/increment database stock for all items
+    for (const item of cartItems) {
+      await updateFirestoreStock(item.product.id, item.quantity);
+    }
+    setCartItems([]);
   };
 
-  const getCartCount = () => {
-    return cart.reduce((count, item) => count + item.quantity, 0);
+  const placeOrder = async (cliente: { nombre: string; direccion: string; telefono: string; metodoPago: string }) => {
+    if (cartItems.length === 0) return;
+
+    // Calculate total price
+    const total = cartItems.reduce((acc, item) => acc + Number(item.product.precio) * item.quantity, 0);
+
+    // Save order through the service function
+    await crearOrden({
+      cliente,
+      items: cartItems.map((item) => ({
+        id: item.product.id,
+        nombre: item.product.nombre,
+        precio: Number(item.product.precio),
+        cantidad: item.quantity,
+        imagen: item.product.imagen
+      })),
+      total,
+      estado: "Pendiente"
+    });
+
+    // Clear local cart items WITHOUT updating Firestore stock (since the order is finalized)
+    setCartItems([]);
   };
+
+  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const totalPrice = cartItems.reduce((acc, item) => acc + Number(item.product.precio) * item.quantity, 0);
 
   return (
     <CartContext.Provider
       value={{
-        cart,
+        cartItems,
         addToCart,
-        removeFromCart,
         updateQuantity,
+        removeFromCart,
         clearCart,
-        getCartTotal,
-        getCartCount
-        ,
-        lastAdded,
-        clearLastAdded
+        placeOrder,
+        totalItems,
+        totalPrice
       }}
     >
       {children}
     </CartContext.Provider>
   );
-}
-
-export function useCart() {
-  const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-}
+};

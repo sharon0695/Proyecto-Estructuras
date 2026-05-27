@@ -1,4 +1,9 @@
-# Proyecto-Estructuras
+# Proyecto-Estructuras - FarmaciaR
+
+### Autores
+- Sharon Zuray Abella Diaz
+- Alan Basante
+- Yenaro Samuel Gracia Ruiz
 
 ## Alcance del sistema y tecnologías utilizadas
 

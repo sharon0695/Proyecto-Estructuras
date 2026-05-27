@@ -1,85 +1,48 @@
-import styles from "./Navbar.module.scss";
 import { useNavigate } from "react-router-dom";
-import { ShoppingCart, User } from "lucide-react";
-import { useCart } from "../../context/CartContext";
-import { useAuth } from "../../context/AuthContext";
-import { useState } from "react";
-import { signOut } from "firebase/auth";
 import { auth } from "../../Firebase/config";
+import { signOut } from "firebase/auth";
+import { useAuth } from "../../context/AuthContext";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const { getCartCount } = useCart();
-  const { isAdmin } = useAuth();
-  const count = getCartCount();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    setShowUserMenu(false);
-    navigate('/');
-  };
+  const { user } = useAuth();
 
   return (
-    <header className={styles.topbar}>
-      <button className={styles.brand} onClick={() => navigate("/Home")}>
-        <span className={styles.brandLeaf}>🍃</span>
-        <span>FarmaciaR</span>
-      </button>
-
-      <nav className={styles.menu}>
-        <button type="button" onClick={() => navigate("/Home")}>
-          Inicio
-        </button>
-        <button type="button" onClick={() => navigate("/Home")}>
-          Productos
-        </button>
-        <button type="button" onClick={() => navigate("/Home")}>
-          Ofertas
-        </button>
-        <button type="button" onClick={() => navigate("/Home")}>
-          Nosotros
-        </button>
-      </nav>
-
-      <div className={styles.topActions}>
-        <button
-          type="button"
-          aria-label="Carrito"
-          className={styles.iconBtn}
-          onClick={() => navigate("/cart")}
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm py-2 px-4">
+      <div className="container-fluid d-flex justify-content-between align-items-center">
+        <button 
+          className="navbar-brand fw-bold d-flex align-items-center gap-2 border-0 bg-transparent text-white"
+          onClick={() => navigate('/admin')}
         >
-          <ShoppingCart />
-          {count > 0 && <span className={styles.cartBadge}>{count}</span>}
+          <span style={{ fontSize: "1.3rem" }}>🛡️</span>
+          <span>FarmaApp <span className="badge bg-danger fs-6 py-1 px-2.5 ms-1">Admin</span></span>
         </button>
 
-        <div className={styles.userMenuWrapper}>
-          <button
-            type="button"
-            aria-label="Perfil"
-            className={styles.iconBtn}
-            onClick={() => setShowUserMenu((prev) => !prev)}
+        <div className="d-flex align-items-center gap-3">
+          <span className="text-white-50 small d-none d-md-inline">
+            Conectado como: <strong>{user?.email}</strong>
+          </span>
+          <button 
+            className="btn btn-outline-light btn-sm rounded-pill px-3"
+            onClick={() => navigate('/Home')}
           >
-            <User />
+            Volver al catálogo
           </button>
-
-          {showUserMenu ? (
-            <div className={styles.userDropdown}>
-              <button type="button" onClick={() => navigate('/profile')}>
-                Mi perfil
-              </button>
-              {isAdmin ? (
-                <button type="button" onClick={() => navigate('/admin')}>
-                  Panel admin
-                </button>
-              ) : null}
-              <button type="button" onClick={handleLogout}>
-                Cerrar sesión
-              </button>
-            </div>
-          ) : null}
+          <button 
+            className="btn btn-danger btn-sm rounded-pill px-3"
+            onClick={() => {
+              signOut(auth).then(() => {
+                navigate('/Login');
+              });
+            }}
+          >
+            Cerrar sesión
+          </button>
         </div>
       </div>
-    </header>
+    </nav>
   );
 }
+
+

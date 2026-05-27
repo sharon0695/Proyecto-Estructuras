@@ -4,6 +4,7 @@ export interface Medicamento {
   precio: number;
   imagen: string;
   stock: number;
-  categoria: string;
-  descripcion: string;
-}
+  categoria: string[] | string;
+  descripcion?: string;
+  updatedAt?: any;
+}

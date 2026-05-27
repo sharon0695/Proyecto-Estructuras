@@ -1,33 +1,57 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCart } from "../../context/CartContext";
 import { useMedicamentos } from "../../hooks/useMedicamento";
 import { usePromociones } from "../../hooks/usePromociones";
-import { useCategorias } from "../../hooks/useCategorias";
-import { signOut } from "firebase/auth";
-import { auth } from "../../Firebase/config";
-import SearchBar from "../../components/shared/SearchBar";
 import type { Medicamento } from "../../types/Medicamento";
-
-import { ShoppingCart, User } from "lucide-react"
-import styles from "./ProductsPage.module.scss";
-import { toast } from "sonner";
+import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { auth } from "../../Firebase/config";
+import { signOut } from "firebase/auth";
+
+import styles from "./ProductsPage.module.scss";
 
 type SortMode = "destacado" | "precio-asc" | "precio-desc";
 
-const QUICK_TERMS = ["Ibuprofeno", "Vitamina C", "Loratadina"];
+// QUICK_TERMS removed — quick suggestions panel hidden
+
+const CATEGORY_ICONS: Record<string, string> = {
+  "Todos": "◉",
+  "Analgesicos": "💊",
+  "Analgésicos": "💊",
+  "Analgésico": "💊",
+  "Analgesico": "💊",
+  "Vitaminas": "⚕",
+  "Vitamina": "⚕",
+  "Antibioticos": "🧪",
+  "Antibióticos": "🧪",
+  "Antibiótico": "🧪",
+  "Antibiotico": "🧪",
+  "Dermatologia": "💧",
+  "Dermatología": "💧",
+  "Digestivo": "◍",
+  "Cardiovascular": "❤",
+  "Infantil": "◔",
+  "Cuidado Personal": "✦",
+  "Cuidado": "✦",
+  "Gel": "🧴",
+  "Solar": "☀️",
+};
 
 function stripAccents(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function normalizeCategoria(raw: unknown): string {
-  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (!raw) return "General";
 
-  if (!value || typeof value !== "string") return "General";
+  if (Array.isArray(raw)) {
+    if (raw.length === 0) return "General";
+    return normalizeCategoria(raw[0]);
+  }
 
-  const cleaned = value.trim();
+  if (typeof raw !== "string") return "General";
+
+  const cleaned = raw.trim();
   if (!cleaned) return "General";
 
   return stripAccents(cleaned)
@@ -46,13 +70,13 @@ function getPromoData(item: any) {
 }
 
 export default function ProductsPage() {
-  const { addToCart, getCartCount } = useCart();
-  const { isAdmin } = useAuth();
   const navigate = useNavigate();
+  const { addToCart, totalItems } = useCart();
+  const { isAdmin, user } = useAuth();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const offersRef = useRef<HTMLElement | null>(null);
   const productsRef = useRef<HTMLElement | null>(null);
   const footerRef = useRef<HTMLElement | null>(null);
-  const { categorias } = useCategorias();
   const { data: promociones } = usePromociones<any>();
   const { data: medicamentos, loading } = useMedicamentos();
   const [query, setQuery] = useState("");
@@ -60,32 +84,74 @@ export default function ProductsPage() {
   const [sortMode, setSortMode] = useState<SortMode>("destacado");
   const [promoIndex, setPromoIndex] = useState(0);
   const [promoDirection, setPromoDirection] = useState<"next" | "prev">("next");
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const cartCount = getCartCount();
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    setShowUserMenu(false);
-    navigate('/');
-  };
+  const categoryList = useMemo(() => {
+    const categoryMap = new Map<string, string>();
+    medicamentos.forEach(med => {
+      if (!med.categoria) return;
+      if (Array.isArray(med.categoria)) {
+        med.categoria.forEach(c => {
+          if (c) categoryMap.set(normalizeCategoria(c), c.trim());
+        });
+      } else {
+        categoryMap.set(normalizeCategoria(med.categoria), med.categoria.trim());
+      }
+    });
+
+    const getBestIcon = (display: string, normalized: string): string => {
+      if (CATEGORY_ICONS[display]) return CATEGORY_ICONS[display];
+      if (CATEGORY_ICONS[normalized]) return CATEGORY_ICONS[normalized];
+
+      const lower = display.toLowerCase();
+      if (lower.includes("solar") || lower.includes("sol") || lower.includes("bloqueador")) return "☀️";
+      if (lower.includes("dolor")) return "⚡";
+      if (lower.includes("analges") || lower.includes("analgés")) return "💊";
+      if (lower.includes("crema") || lower.includes("cream")) return "🧴";
+      if (lower.includes("gel")) return "💧";
+      if (lower.includes("corporal") || lower.includes("cuerpo")) return "🚶";
+      if (lower.includes("alergia")) return "🤧";
+      if (lower.includes("bebe") || lower.includes("bebé") || lower.includes("infantil") || lower.includes("niño") || lower.includes("niña")) return "🍼";
+      if (lower.includes("digest") || lower.includes("estomago") || lower.includes("estómago")) return "◍";
+      if (lower.includes("cardio") || lower.includes("corazon") || lower.includes("corazón") || lower.includes("presion") || lower.includes("presión")) return "❤️";
+      if (lower.includes("dermo") || lower.includes("piel") || lower.includes("cutaneo") || lower.includes("cutáneo")) return "🧼";
+      if (lower.includes("vitamina") || lower.includes("suplemento") || lower.includes("nutric") || lower.includes("nutrición")) return "⚕";
+      if (lower.includes("antibio") || lower.includes("infeccion") || lower.includes("infección") || lower.includes("virus")) return "🧪";
+      if (lower.includes("personal") || lower.includes("higiene") || lower.includes("jabon") || lower.includes("jabón") || lower.includes("ducha")) return "🚿";
+      if (lower.includes("natural") || lower.includes("hierba") || lower.includes("planta") || lower.includes("te") || lower.includes("té")) return "🌿";
+
+      return "🩹";
+    };
+
+    const list = Array.from(categoryMap.entries()).map(([normalized, display]) => ({
+      label: display,
+      normalized,
+      icon: getBestIcon(display, normalized)
+    }));
+
+    return [{ label: "Todos", normalized: "Todos", icon: "◉" }, ...list];
+  }, [medicamentos]);
 
   const filteredMedicamentos = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    const normalizedCategory = selectedCategory;
 
     let result = medicamentos.filter((med) => {
       const byName = med.nombre?.toLowerCase().includes(normalizedQuery);
-      const categorias = Array.isArray(med.categoria) ? med.categoria : [med.categoria];
-      const byCategory = categorias.some((cat) =>
-        normalizeCategoria(cat).toLowerCase().includes(normalizedQuery)
-      );
+      
+      const byCategory = Array.isArray(med.categoria)
+        ? med.categoria.some(c => normalizeCategoria(c).toLowerCase().includes(normalizedQuery))
+        : normalizeCategoria(med.categoria).toLowerCase().includes(normalizedQuery);
 
       const matchesSearch = normalizedQuery ? byName || byCategory : true;
-      const matchesCategory =
-        normalizeCategoria(selectedCategory) === "Todos" ||
-        categorias.some((cat) =>
-          normalizeCategoria(cat).includes(normalizeCategoria(selectedCategory)) ||
-          normalizeCategoria(selectedCategory).includes(normalizeCategoria(cat))
-        );
+      
+      let matchesCategory = normalizedCategory === "Todos";
+      if (!matchesCategory && med.categoria) {
+        if (Array.isArray(med.categoria)) {
+          matchesCategory = med.categoria.some(c => normalizeCategoria(c) === normalizedCategory);
+        } else {
+          matchesCategory = normalizeCategoria(med.categoria) === normalizedCategory;
+        }
+      }
 
       return matchesSearch && matchesCategory;
     });
@@ -96,22 +162,6 @@ export default function ProductsPage() {
 
     if (sortMode === "precio-desc") {
       result = [...result].sort((a, b) => Number(b.precio) - Number(a.precio));
-    }
-
-    // Diversify: when a specific category is selected, mix in some random items
-    if (normalizeCategoria(selectedCategory) !== "Todos") {
-      const other = medicamentos.filter((m) => !result.some((r) => r.id === m.id));
-      // shuffle other
-      for (let i = other.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [other[i], other[j]] = [other[j], other[i]];
-      }
-      const extras = other.slice(0, Math.min(6, other.length));
-      const combined = [...result, ...extras];
-      // unique by id
-      const map = new Map<string, Medicamento>();
-      combined.forEach((it) => map.set(it.id, it));
-      return Array.from(map.values());
     }
 
     return result;
@@ -145,21 +195,14 @@ export default function ProductsPage() {
     setPromoIndex(index);
   };
 
+  // quick term selector removed
+
   const hasOffer = (index: number) => index % 4 === 0;
   const hasNewTag = (index: number) => index % 5 === 1;
 
   const formatPrice = (value: unknown) => {
     const numeric = Number(value ?? 0);
     return `$${numeric.toFixed(2)}`;
-  };
-
-  const handleAddToCart = (product: Medicamento) => {
-    if (product.stock <= 0) {
-      toast.error('Producto agotado');
-      return;
-    }
-    addToCart(product, 1);
-    toast.success('Producto agregado al carrito correctamente')
   };
 
   const scrollToSection = (target: React.RefObject<HTMLElement | null>) => {
@@ -169,46 +212,109 @@ export default function ProductsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.topbar}>
-        <button className={styles.brand} onClick={() => navigate("/Home")}>
+        <button className={styles.brand} onClick={() => navigate("/")}>
           <span className={styles.brandLeaf}>🍃</span>
           <span>FarmaciaR</span>
         </button>
 
         <nav className={styles.menu}>
-          <button onClick={() => navigate("/Home")}>Inicio</button>
+          <button onClick={() => navigate("/")}>Inicio</button>
           <button type="button" onClick={() => scrollToSection(productsRef)}>Productos</button>
           <button type="button" onClick={() => scrollToSection(offersRef)}>Ofertas</button>
           <button type="button" onClick={() => scrollToSection(footerRef)}>Nosotros</button>
         </nav>
 
         <div className={styles.topActions}>
-          <button type="button" aria-label="Carrito" className={styles.iconBtn} onClick={() => navigate("/cart")}> 
-            <ShoppingCart />
-            {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
+          <button
+            type="button"
+            aria-label="Carrito"
+            className={styles.iconBtn}
+            onClick={() => navigate("/carrito")}
+            style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            🛒
+            {totalItems > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-6px',
+                right: '-6px',
+                background: '#e03131',
+                color: '#fff',
+                borderRadius: '50%',
+                padding: '2px 5px',
+                fontSize: '9px',
+                fontWeight: 'bold',
+                lineHeight: 1,
+                border: '1px solid #fff'
+              }}>
+                {totalItems}
+              </span>
+            )}
           </button>
-          <div className={styles.userMenuWrapper}>
+          <div style={{ position: 'relative' }}>
             <button
               type="button"
               aria-label="Perfil"
               className={styles.iconBtn}
-              onClick={() => setShowUserMenu((prev) => !prev)}
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
-              <User />
+              👤
             </button>
-
-            {showUserMenu && (
-              <div className={styles.userDropdown}>
-                <button type="button" onClick={() => navigate('/profile')}>
-                  Mi perfil
-                </button>
-                {isAdmin ? (
-                  <button type="button" onClick={() => navigate('/admin')}>
-                    Panel admin
+            {showProfileMenu && (
+              <div style={{
+                position: 'absolute',
+                top: '40px',
+                right: '0',
+                background: '#fff',
+                border: '1px solid #dbe3ed',
+                borderRadius: '12px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                padding: '16px',
+                minWidth: '200px',
+                zIndex: 100,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
+              }}>
+                <div style={{ fontWeight: 'bold', color: '#17324c', borderBottom: '1px solid #f0f4f8', paddingBottom: '8px' }}>
+                  {user?.displayName || user?.email || "Usuario"}
+                </div>
+                {isAdmin && (
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      navigate('/admin');
+                    }}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#136b96',
+                      fontWeight: 'bold',
+                      textAlign: 'left',
+                      padding: '6px 0',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Panel Admin
                   </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={handleLogout}
+                )}
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    signOut(auth).then(() => {
+                      navigate('/Login');
+                    });
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#da5c5c',
+                    fontWeight: 'bold',
+                    textAlign: 'left',
+                    padding: '6px 0',
+                    cursor: 'pointer'
+                  }}
                 >
                   Cerrar sesión
                 </button>
@@ -216,7 +322,7 @@ export default function ProductsPage() {
             )}
           </div>
         </div>
-      </header >
+      </header>
 
       <section className={styles.heroBanner}>
         <h1>Bienvenido a FarmaciaR</h1>
@@ -224,19 +330,18 @@ export default function ProductsPage() {
       </section>
 
       <section className={styles.searchSection}>
-        <SearchBar
-          data={medicamentos}
-          onSearch={(texto) => setQuery(texto)} 
-        />
-
-        <div className={styles.quickTerms}>
-          {QUICK_TERMS.map((term) => (
-            <button key={term} type="button" onClick={() => setQuery(term)}>
-              <span>◌</span>
-              {term}
-            </button>
-          ))}
+        <div className={styles.searchRow}>
+          <span className={styles.searchIcon}>⌕</span>
+          <input
+            type="text"
+            placeholder="Busca medicamentos, vitaminas, marcas..."
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <button type="button">Buscar</button>
         </div>
+
+        {/* Quick terms panel removed as requested */}
       </section>
 
       <section ref={offersRef} className={styles.offersSection}>
@@ -291,15 +396,15 @@ export default function ProductsPage() {
         <h2>Explorar por categoría</h2>
 
         <div className={styles.categoryGrid}>
-          {[{ label: "Todos", icon: "◉" }, ...categorias].map((category) => {
-            const active = selectedCategory === category.label;
+          {categoryList.map((category) => {
+            const active = selectedCategory === category.normalized;
 
             return (
               <button
-                key={category.label}
+                key={category.normalized}
                 type="button"
                 className={`${styles.categoryCard} ${active ? styles.categoryCardActive : ""}`}
-                onClick={() => setSelectedCategory(category.label)}
+                onClick={() => setSelectedCategory(category.normalized)}
               >
                 <span>{category.icon}</span>
                 <strong>{category.label}</strong>
@@ -325,8 +430,10 @@ export default function ProductsPage() {
           <p className={styles.productsLoading}>No hay resultados para tu búsqueda.</p>
         ) : (
           <div className={styles.productsGrid}>
-            {filteredMedicamentos.map((med: Medicamento, index: number) => {
-              const category = normalizeCategoria(med.categoria);
+             {filteredMedicamentos.map((med: Medicamento, index: number) => {
+              const category = Array.isArray(med.categoria)
+                ? med.categoria.map(c => normalizeCategoria(c)).join(" / ")
+                : normalizeCategoria(med.categoria);
               const imageAlt = med.nombre || "Producto";
 
               return (
@@ -361,8 +468,15 @@ export default function ProductsPage() {
                     {hasOffer(index) ? <span>{formatPrice(Number(med.precio) * 1.2)}</span> : null}
                   </div>
 
-                  <button type="button" disabled={med.stock <= 0} onClick={() => handleAddToCart(med)}>
-                    Agregar al carrito
+                  <button
+                    type="button"
+                    disabled={med.stock <= 0}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      addToCart(med, 1);
+                    }}
+                  >
+                    {med.stock <= 0 ? "Agotado" : "🛒 Agregar al carrito"}
                   </button>
                 </article>
               );
@@ -381,7 +495,6 @@ export default function ProductsPage() {
         </div>
 
         <div className={styles.helpActions}>
-          <button type="button" className={styles.chatBtn}>💬 Chat en vivo</button>
           <button type="button" className={styles.whatsappBtn}>🟢 WhatsApp</button>
         </div>
       </section>
@@ -403,6 +516,6 @@ export default function ProductsPage() {
 
         <div className={styles.footerBottom}>© 2026 FarmaciaR. Todos los derechos reservados.</div>
       </footer>
-    </div >
+    </div>
   );
 }

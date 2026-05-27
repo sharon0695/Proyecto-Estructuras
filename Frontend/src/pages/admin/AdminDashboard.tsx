@@ -6,7 +6,6 @@ import { useAuth } from "../../context/AuthContext";
 import Navbar from "../../components/shared/Navbar";
 import styles from "./AdminDashboard.module.scss";
 import { updateMedicamentoStock } from "../../services/medicamentos.service";
-import { toast } from "sonner";
 
 function formatPrice(value: unknown) {
   const numeric = Number(value ?? 0);
@@ -40,17 +39,17 @@ export default function AdminDashboard() {
     const nextStock = Number(draftStocks[medicamentoId] ?? 0);
 
     if (Number.isNaN(nextStock) || nextStock < 0) {
-      toast.error('El stock debe ser 0 o mayor');
+      alert('El stock debe ser 0 o mayor');
       return;
     }
 
     try {
       setSavingId(medicamentoId);
       await updateMedicamentoStock(medicamentoId, nextStock);
-      toast.success('Stock actualizado correctamente');
+      alert('Stock actualizado correctamente');
     } catch (error) {
       console.error(error);
-      toast.error('No se pudo actualizar el stock');
+      alert('No se pudo actualizar el stock');
     } finally {
       setSavingId(null);
     }

@@ -7,15 +7,14 @@ export function useMedicamentos() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = subscribeMedicamentos((res) => {
-      setData(res as Medicamento[]);
-      setLoading(false);
-    }, () => {
+    const unsubscribe = subscribeMedicamentos((list) => {
+      setData(list);
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
   return { data, loading };
 }
+

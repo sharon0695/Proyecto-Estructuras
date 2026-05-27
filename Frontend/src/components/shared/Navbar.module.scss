@@ -1,38 +1,64 @@
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 30px;
-  border-radius: 10px;
 
-  background: linear-gradient(90deg, #aa50eb, #d63384);
-  color: white;
-
+.topbar {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 58px;
+  padding: 0 22px;
+  background: #fff;
+  border-bottom: 1px solid #dfe6ef;
 }
 
-.logo {
-  font-size: 22px;
-  font-weight: bold;
-}
 
-.links {
-  display: flex;
-  gap: 15px;
-}
-
-.links button {
-  background: white;
-  color: #6a0dad;
+.brand {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: none;
-  padding: 8px 14px;
-  border-radius: 10px;
+  background: transparent;
+  color: #1773a3;
+  font-size: 1.15rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: 0.3s;
 }
 
-.links button:hover {
-  background: #f5e6ff;
+.brandLeaf {
+  font-size: 0.95rem;
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+
+  button {
+    border: none;
+    background: transparent;
+    color: #4b5a6c;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
+
+
+.topActions {
+  display: flex;
+  gap: 8px;
+  justify-self: end;
+}
+
+.iconBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #dde5ef;
+  background: #fff;
+  padding: 0;
+  cursor: pointer;
 }

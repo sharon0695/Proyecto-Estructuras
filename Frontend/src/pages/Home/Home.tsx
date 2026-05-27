@@ -36,9 +36,6 @@ export default function Home() {
 
         <nav className={styles.menu}>
           <button onClick={() => navigate("/")}>Inicio</button>
-          <button onClick={() => navigate("/Home")}>Productos</button>
-          <button onClick={() => navigate("/Home")}>Carrito</button>
-          <button onClick={() => navigate("/Home")}>Admin</button>
         </nav>
 
         <div className={styles.actions}>

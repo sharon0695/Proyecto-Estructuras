@@ -16,7 +16,7 @@ import { useAuth } from "../../context/AuthContext";
 
 type SortMode = "destacado" | "precio-asc" | "precio-desc";
 
-const QUICK_TERMS = ["Ibuprofeno", "Vitamina C", "Loratadina"];
+
 
 function stripAccents(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -228,15 +228,6 @@ export default function ProductsPage() {
           data={medicamentos}
           onSearch={(texto) => setQuery(texto)} 
         />
-
-        <div className={styles.quickTerms}>
-          {QUICK_TERMS.map((term) => (
-            <button key={term} type="button" onClick={() => setQuery(term)}>
-              <span>◌</span>
-              {term}
-            </button>
-          ))}
-        </div>
       </section>
 
       <section ref={offersRef} className={styles.offersSection}>
@@ -381,7 +372,6 @@ export default function ProductsPage() {
         </div>
 
         <div className={styles.helpActions}>
-          <button type="button" className={styles.chatBtn}>💬 Chat en vivo</button>
           <button type="button" className={styles.whatsappBtn}>🟢 WhatsApp</button>
         </div>
       </section>

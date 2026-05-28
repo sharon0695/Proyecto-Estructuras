@@ -75,6 +75,13 @@ export default function ProductDetail() {
         .filter((m) => m.categoria === product.categoria && m.id !== product.id)
         .slice(0, 3);
     }
+
+    if (recomendaciones.length === 0) {
+      const otro = medicamentos.find((m) => m.id !== product.id);
+      if (otro) {
+        recomendaciones = [otro];
+      }
+    }
   }
 
   if (!product && loading) {
@@ -252,9 +259,6 @@ export default function ProductDetail() {
           </div>
 
           <div className={styles.contactActions}>
-            <button type="button" className={styles.chatBtn}>
-              💬 Chat en vivo
-            </button>
             <button type="button" className={styles.whatsappBtn}>
               🟢 WhatsApp
             </button>
